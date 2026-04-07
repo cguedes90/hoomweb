@@ -55,9 +55,11 @@ async function submit() {
 <style scoped>
 .auth-wrapper {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
   background: linear-gradient(135deg, #1a56db 0%, #1648c4 100%);
 }
 .auth-card {
@@ -65,7 +67,7 @@ async function submit() {
   border-radius: 12px;
   padding: 2.5rem;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   box-shadow: 0 20px 60px rgba(0,0,0,.2);
 }
 .auth-card h1 { text-align: center; color: #1a56db; margin-bottom: .25rem; }
@@ -73,4 +75,8 @@ async function submit() {
 .btn-block { width: 100%; padding: .65rem; margin-top: .5rem; }
 .auth-link { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: #6b7280; }
 .auth-link a { color: #1a56db; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 1.75rem 1.25rem; border-radius: 10px; }
+}
 </style>

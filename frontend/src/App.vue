@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div class="app-wrapper">
     <nav v-if="auth.isAuthenticated" class="navbar">
       <div class="nav-brand">Hoomweb</div>
       <div class="nav-links">
@@ -14,6 +14,7 @@
     </main>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import { RouterLink, RouterView, useRouter } from 'vue-router'
@@ -30,7 +31,10 @@ function logout() {
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+/* .app-wrapper ocupa todo o espaço do #app (que já é flex column pelo main.css) */
+.app-wrapper { display: contents; }
 .navbar {
   background: #1a56db;
   color: white;
@@ -48,7 +52,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .nav-user { font-size: .875rem; opacity: .75; }
 .btn-logout { background: rgba(255,255,255,.2); border: none; color: white; padding: .35rem .75rem; border-radius: 4px; cursor: pointer; }
 .btn-logout:hover { background: rgba(255,255,255,.35); }
-.main-content { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+.main-content { padding: 1.5rem 1rem; max-width: 1100px; margin: 0 auto; }
+@media (min-width: 640px) { .main-content { padding: 2rem 1.5rem; } }
+@media (min-width: 1024px) { .main-content { padding: 2rem; } }
 .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); margin-bottom: 1.5rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: .35rem; font-weight: 500; font-size: .875rem; }
