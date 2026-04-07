@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
+/// Tela de listagem de clientes.
+///
+/// Carrega os clientes da API ao inicializar e suporta pull-to-refresh
+/// para atualizar a lista sem navegar para outra tela.
+/// Cada item exibe avatar com inicial do nome, e-mail, telefone e cidade.
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
   @override
@@ -17,6 +22,10 @@ class _ClientsScreenState extends State<ClientsScreen> {
     _load();
   }
 
+  /// Busca a lista de clientes na API e atualiza o estado local.
+  ///
+  /// Erros são silenciados para não interromper o UX — em produção
+  /// poderia exibir um SnackBar com a mensagem de erro.
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -52,6 +61,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
         itemCount: _clients.length,
         itemBuilder: (_, i) {
           final c = _clients[i];
+          // Extrai a inicial do nome para o avatar; usa '?' como fallback
           final initial = (c['name'] as String).isNotEmpty ? (c['name'] as String)[0].toUpperCase() : '?';
           return Card(
             margin: const EdgeInsets.only(bottom: 10),

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_provider.dart';
 
+/// Tela de autenticação do usuário.
+///
+/// Apresenta um formulário com campos de e-mail e senha. Ao submeter,
+/// delega a autenticação ao [AuthProvider], que persiste o token JWT
+/// e notifica a árvore de widgets para redirecionar à [HomeScreen].
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -11,9 +16,18 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+
+  /// Controla a exibição do indicador de carregamento durante o login.
   bool _loading = false;
+
+  /// Mensagem de erro exibida abaixo do formulário em caso de falha.
   String? _error;
 
+  /// Valida os campos e realiza a chamada de login via [AuthProvider].
+  ///
+  /// Em caso de erro (credenciais inválidas, falha de rede), exibe a
+  /// mensagem retornada pela API. O botão fica desabilitado enquanto
+  /// a requisição está em andamento para evitar duplo envio.
   Future<void> _submit() async {
     if (_emailCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
       setState(() => _error = 'Preencha e-mail e senha.');
@@ -79,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passCtrl,
                         obscureText: true,
                         decoration: _inputDec('Senha'),
+                        // Permite submeter o formulário pelo teclado (action "done")
                         onSubmitted: (_) => _submit(),
                       ),
                       if (_error != null) ...[
@@ -109,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Retorna a decoração padrão para os campos de texto do formulário.
   InputDecoration _inputDec(String label) => InputDecoration(
     labelText: label,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

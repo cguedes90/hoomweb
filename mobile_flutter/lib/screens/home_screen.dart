@@ -4,6 +4,11 @@ import '../services/auth_provider.dart';
 import 'clients_screen.dart';
 import 'tasks_screen.dart';
 
+/// Tela principal pós-autenticação da aplicação.
+///
+/// Estrutura o layout com [AppBar] e [BottomNavigationBar], alternando
+/// entre [ClientsScreen] e [TasksScreen] de acordo com a aba selecionada.
+/// Também gerencia o fluxo de logout com diálogo de confirmação.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -11,8 +16,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// Índice da aba atualmente selecionada (0 = Clientes, 1 = Tarefas).
   int _index = 0;
 
+  /// Lista de telas indexadas pelo [BottomNavigationBar].
   final _screens = const [ClientsScreen(), TasksScreen()];
 
   @override
@@ -29,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.logout),
             tooltip: 'Sair',
             onPressed: () async {
+              // Exibe diálogo de confirmação antes de encerrar a sessão
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
@@ -44,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               );
+              // Verifica context.mounted antes de usar o context após await
               if (ok == true && context.mounted) {
                 context.read<AuthProvider>().logout();
               }

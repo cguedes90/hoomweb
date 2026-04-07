@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
+/// Mapeamento de status para rótulos em português.
 const _statusLabels = {
-  'pending': 'Pendente',
+  'pending':     'Pendente',
   'in_progress': 'Em andamento',
-  'done': 'Concluído',
-  'cancelled': 'Cancelado',
+  'done':        'Concluído',
+  'cancelled':   'Cancelado',
 };
 
+/// Cor de fundo dos badges de status.
 const _statusColors = {
   'pending':     Color(0xFFfef3c7),
   'in_progress': Color(0xFFdbeafe),
@@ -15,6 +17,7 @@ const _statusColors = {
   'cancelled':   Color(0xFFf3f4f6),
 };
 
+/// Cor do texto dos badges de status.
 const _statusTextColors = {
   'pending':     Color(0xFF92400e),
   'in_progress': Color(0xFF1e40af),
@@ -22,11 +25,20 @@ const _statusTextColors = {
   'cancelled':   Color(0xFF6b7280),
 };
 
+/// Define o próximo status no fluxo de progresso da tarefa.
+///
+/// Somente tarefas pendentes ou em andamento podem avançar.
+/// Concluídas e canceladas não possuem próximo passo.
 const _nextStatus = {
-  'pending': 'in_progress',
+  'pending':     'in_progress',
   'in_progress': 'done',
 };
 
+/// Tela de listagem de tarefas com suporte a atualização de status.
+///
+/// Exibe cada tarefa em um card com badge de status colorido, cliente
+/// responsável e data de vencimento. Tarefas não finalizadas mostram
+/// um botão para avançar ao próximo status com confirmação via diálogo.
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
   @override
@@ -36,6 +48,8 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   List<dynamic> _tasks = [];
   bool _loading = true;
+
+  /// ID da tarefa atualmente sendo atualizada (evita múltiplos cliques simultâneos).
   int? _updating;
 
   @override
@@ -44,6 +58,7 @@ class _TasksScreenState extends State<TasksScreen> {
     _load();
   }
 
+  /// Busca a lista de tarefas na API e atualiza o estado local.
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -55,6 +70,11 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 
+  /// Avança o status de uma tarefa para o próximo passo do fluxo.
+  ///
+  /// Exibe um diálogo de confirmação antes de enviar a requisição.
+  /// Atualiza o item na lista local com os dados retornados pela API,
+  /// evitando um reload completo da lista.
   Future<void> _advance(Map task) async {
     final next = _nextStatus[task['status']];
     if (next == null) return;
@@ -76,9 +96,11 @@ class _TasksScreenState extends State<TasksScreen> {
     );
 
     if (confirm != true) return;
+
     setState(() => _updating = task['id']);
     try {
       final updated = await ApiService.updateTaskStatus(task['id'], next);
+      // Atualiza apenas o item modificado sem recarregar toda a lista
       setState(() {
         final idx = _tasks.indexWhere((t) => t['id'] == task['id']);
         if (idx != -1) _tasks[idx] = {...Map<String, dynamic>.from(_tasks[idx]), ...updated};
@@ -135,6 +157,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         child: Text(t['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       ),
                       const SizedBox(width: 8),
+                      // Badge de status com cor semântica
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(999)),
@@ -164,6 +187,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
+                        // Desabilita o botão enquanto a atualização desta tarefa está em andamento
                         onPressed: _updating == t['id'] ? null : () => _advance(t),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF1a56db),
@@ -185,6 +209,7 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  /// Formata uma data ISO 8601 para o padrão brasileiro (dd/MM/yyyy).
   String _formatDate(String iso) {
     try {
       final d = DateTime.parse(iso);
