@@ -6,6 +6,8 @@ COPY . .
 # VITE_API_URL é passado como build arg para que o Vite inclua a URL da API no bundle
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+# CACHEBUST invalida o cache do Docker a cada deploy para garantir rebuild completo
+ARG CACHEBUST=1
 RUN npm run build
 
 FROM nginx:alpine
