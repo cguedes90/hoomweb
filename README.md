@@ -2,23 +2,25 @@
 
 [![CI](https://github.com/cguedes90/hoomweb/actions/workflows/ci.yml/badge.svg)](https://github.com/cguedes90/hoomweb/actions/workflows/ci.yml)
 
-Desafio Técnico Fullstack — solução progressiva cobrindo as etapas 1, 2, 4, 5 e 6.
+Desafio Técnico Fullstack — solução completa cobrindo todas as etapas: 1, 2, 3, 4, 5 e 6.
 
 ## Stack
 
-| Camada    | Tecnologia                          |
-|-----------|-------------------------------------|
-| Backend   | Node.js 20 + TypeScript + Express   |
-| Banco     | PostgreSQL (Neon / qualquer Postgres)|
-| Frontend  | Vue 3 + TypeScript + Pinia + Vue Router |
-| Infra     | Docker + docker-compose             |
+| Camada    | Tecnologia                                      |
+|-----------|-------------------------------------------------|
+| Backend   | Node.js 20 + TypeScript + Express               |
+| Banco     | PostgreSQL (Neon / qualquer Postgres)           |
+| Frontend  | Vue 3 + TypeScript + Pinia + Vue Router         |
+| Mobile    | React Native + Expo + React Navigation          |
+| Infra     | Docker + docker-compose                         |
 
 ---
 
 ## Etapas implementadas
 
 - **Etapa 1 — API REST**: autenticação JWT, CRUD de clientes e tarefas, filtros por status/cliente, documentação Swagger
-- **Etapa 2 — Web**: login, cadastro, listagem/cadastro/edição de clientes e tarefas, filtros, máscaras CPF/CNPJ e telefone
+- **Etapa 2 — Web**: login, cadastro, listagem/cadastro/edição de clientes e tarefas, filtros, máscaras CPF/CNPJ e telefone, layout desktop com sidebar lateral
+- **Etapa 3 — Mobile**: app React Native (Expo) com login, listagem de clientes, listagem de tarefas e atualização de status
 - **Etapa 4 — Integração CEP**: consulta automática via ViaCEP ao digitar o CEP no cadastro de clientes
 - **Etapa 5 — Docker**: Dockerfile multistage para backend e frontend, docker-compose
 - **Etapa 6 — Diferenciais**:
@@ -143,6 +145,31 @@ Documentação interativa: `GET /api/docs`
 
 ---
 
+## Mobile (Etapa 3)
+
+### Pré-requisitos
+- Node.js 20+
+- Expo Go instalado no celular ([iOS](https://apps.apple.com/app/expo-go/id982107779) / [Android](https://play.google.com/store/apps/details?id=host.exp.exponent))
+
+### Executar
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+Escanear o QR code com o Expo Go. O app conecta automaticamente ao backend em produção.
+
+### Funcionalidades
+- Login com e-mail e senha
+- Listagem de clientes com avatar, e-mail, telefone e cidade
+- Listagem de tarefas com status colorido e vencimento
+- Atualização de status com um toque (Pendente → Em andamento → Concluído)
+- Pull to refresh em todas as listas
+
+---
+
 ## Estrutura do projeto
 
 ```
@@ -172,6 +199,13 @@ hoomweb/
 │   │   └── views/         # Login, Register, Clients, Tasks
 │   ├── Dockerfile
 │   └── nginx.conf
+├── mobile/                # App React Native (Expo)
+│   ├── src/
+│   │   ├── context/       # AuthContext (login, logout, token)
+│   │   ├── navigation/    # Stack + Bottom Tabs
+│   │   ├── screens/       # Login, Clients, Tasks
+│   │   └── services/      # Axios + SecureStore interceptor
+│   └── App.tsx
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
