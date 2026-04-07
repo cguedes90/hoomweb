@@ -65,12 +65,15 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
-// Inicia o servidor HTTP na porta configurada via variável de ambiente, com fallback para 3000
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Swagger docs at http://localhost:${PORT}/api/docs`);
-});
+// Inicia o servidor HTTP apenas quando o arquivo é executado diretamente (não em testes)
+// require.main === module é falso quando o arquivo é importado pelo supertest nos testes
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Swagger docs at http://localhost:${PORT}/api/docs`);
+  });
+}
 
 // Exporta a instância para uso em testes de integração com supertest
 export default app;

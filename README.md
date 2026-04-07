@@ -1,6 +1,8 @@
 # Hoomweb — Sistema de Gestão de Clientes e Tarefas
 
-Desafio Técnico Fullstack — solução progressiva cobrindo as etapas 1, 2, 4 e 5.
+[![CI](https://github.com/cguedes90/hoomweb/actions/workflows/ci.yml/badge.svg)](https://github.com/cguedes90/hoomweb/actions/workflows/ci.yml)
+
+Desafio Técnico Fullstack — solução progressiva cobrindo as etapas 1, 2, 4, 5 e 6.
 
 ## Stack
 
@@ -16,9 +18,15 @@ Desafio Técnico Fullstack — solução progressiva cobrindo as etapas 1, 2, 4 
 ## Etapas implementadas
 
 - **Etapa 1 — API REST**: autenticação JWT, CRUD de clientes e tarefas, filtros por status/cliente, documentação Swagger
-- **Etapa 2 — Web**: login, cadastro, listagem/cadastro/edição de clientes e tarefas, filtros
+- **Etapa 2 — Web**: login, cadastro, listagem/cadastro/edição de clientes e tarefas, filtros, máscaras CPF/CNPJ e telefone
 - **Etapa 4 — Integração CEP**: consulta automática via ViaCEP ao digitar o CEP no cadastro de clientes
 - **Etapa 5 — Docker**: Dockerfile multistage para backend e frontend, docker-compose
+- **Etapa 6 — Diferenciais**:
+  - Testes automatizados com Jest + Supertest (32 testes, ~78% de cobertura)
+  - CI/CD com GitHub Actions (build + test em cada push/PR)
+  - Controle de permissões: roles `user`/`admin` com middleware `requireAdmin`
+  - Logs estruturados com Winston (JSON em produção, colorizado em dev)
+  - Documentação Swagger/OpenAPI 3.0 em `/api/docs`
 
 ---
 
@@ -139,17 +147,22 @@ Documentação interativa: `GET /api/docs`
 
 ```
 hoomweb/
+├── .github/
+│   └── workflows/
+│       └── ci.yml         # GitHub Actions: test + build
 ├── backend/
 │   ├── src/
+│   │   ├── __tests__/     # Testes de integração (Jest + Supertest)
 │   │   ├── config/        # Database, Swagger, Logger
 │   │   ├── controllers/   # Auth, Client, Task
 │   │   ├── middlewares/   # Auth JWT, Validação
-│   │   ├── migrations/    # SQL + runner
+│   │   ├── migrations/    # SQL + runner idempotente
 │   │   ├── models/        # User, Client, Task
 │   │   ├── routes/        # Auth, Client, Task
 │   │   ├── services/      # CEP (ViaCEP)
 │   │   └── index.ts
 │   ├── Dockerfile
+│   ├── jest.config.ts
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -169,9 +182,19 @@ hoomweb/
 ## Observações técnicas
 
 - **Banco**: PostgreSQL via Neon (serverless). O script de migration em `backend/src/migrations/001_initial.sql` cria todas as tabelas com índices otimizados.
-- **Segurança**: senhas com bcrypt (salt 12), JWT com expiração configurável, validação de entrada com `express-validator`.
+- **Segurança**: senhas com bcrypt (salt 12), JWT com expiração configurável, validação de entrada com `express-validator`, anti-enumeração de usuários no login.
 - **Multi-tenancy**: cada usuário só acessa seus próprios clientes e tarefas (filtro por `user_id` em todas as queries).
 - **CEP**: integração com ViaCEP (`viacep.com.br`) — preenchimento automático de endereço no cadastro de clientes.
-- **Logs estruturados**: Winston com JSON em produção.
-- **Swagger**: documentação em `/api/docs` com autenticação Bearer JWT.
-- **Docker**: build multistage para imagens menores. Frontend servido por Nginx com proxy reverso para o backend.
+- **Logs estruturados**: Winston com JSON em produção, colorizado em desenvolvimento.
+- **Swagger**: documentação interativa em `/api/docs` com autenticação Bearer JWT.
+- **Docker**: build multistage para imagens menores. Frontend servido por Nginx com variável PORT dinâmica.
+- **Testes**: 32 testes de integração com banco real (sem mocks), usando e-mails únicos por execução para isolamento. Cobertura ~78%.
+- **CI/CD**: GitHub Actions com 3 jobs — test (com banco real via secrets), build-backend e build-frontend.
+
+## Deploy em produção
+
+| Serviço  | URL |
+|----------|-----|
+| Frontend | https://frontend-production-f738.up.railway.app |
+| Backend  | https://caring-bravery-production-91ef.up.railway.app |
+| Swagger  | https://caring-bravery-production-91ef.up.railway.app/api/docs |

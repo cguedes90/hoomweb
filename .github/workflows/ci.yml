@@ -1,0 +1,105 @@
+name: CI
+
+# Executa em pushes e pull requests para a branch principal
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  # ─── Job 1: Testes do backend ──────────────────────────────────────────────
+  test-backend:
+    name: Testes Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # As variáveis de ambiente sensíveis são armazenadas como GitHub Secrets
+      # e injetadas aqui para que os testes de integração consigam se conectar ao banco
+      - name: Executar testes com cobertura
+        run: npm test -- --forceExit --runInBand
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN: 7d
+          NODE_ENV: test
+
+      - name: Publicar relatório de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+
+  # ─── Job 2: Build do backend ───────────────────────────────────────────────
+  build-backend:
+    name: Build Backend (TypeScript)
+    runs-on: ubuntu-latest
+    needs: test-backend
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Compilar TypeScript
+        run: npm run build
+
+  # ─── Job 3: Build do frontend ──────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend (Vue 3 + Vite)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Type-check e build de produção
+        run: npm run build
+        env:
+          # URL de produção do backend para o build do Vite
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
