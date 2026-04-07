@@ -107,4 +107,30 @@ export const UserModel = {
   async comparePassword(plain: string, hash: string): Promise<boolean> {
     return bcrypt.compare(plain, hash);
   },
+
+  async setResetToken(email: string, token: string, expiresAt: Date): Promise<boolean> {
+    const { rowCount } = await pool.query(
+      `UPDATE users SET reset_token = $1, reset_token_expires = $2, updated_at = NOW()
+       WHERE email = $3`,
+      [token, expiresAt, email]
+    );
+    return (rowCount ?? 0) > 0;
+  },
+
+  async findByResetToken(token: string): Promise<User | null> {
+    const { rows } = await pool.query(
+      `SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()`,
+      [token]
+    );
+    return rows[0] || null;
+  },
+
+  async resetPassword(id: number, newPassword: string): Promise<void> {
+    const hash = await bcrypt.hash(newPassword, 12);
+    await pool.query(
+      `UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL, updated_at = NOW()
+       WHERE id = $2`,
+      [hash, id]
+    );
+  },
 };

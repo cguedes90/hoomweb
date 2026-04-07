@@ -14,7 +14,9 @@
 
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { UserModel } from '../models/user.model';
+import { EmailService } from '../services/email.service';
 import logger from '../config/logger';
 
 /**
@@ -140,12 +142,57 @@ export const AuthController = {
    */
   async me(req: Request & { user?: { id: number } }, res: Response): Promise<void> {
     try {
-      // req.user é garantido pelo middleware authenticate que precede este handler
       const user = await UserModel.findById(req.user!.id);
       res.json(user);
     } catch (err) {
       logger.error('Me error', err);
       res.status(500).json({ error: 'Erro ao buscar usuário' });
+    }
+  },
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      // Resposta genérica independente de o e-mail existir (evita enumeração)
+      const genericOk = () => res.json({ message: 'Se o e-mail estiver cadastrado, você receberá as instruções.' });
+
+      const user = await UserModel.findByEmail(email);
+      if (!user) { genericOk(); return; }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+      await UserModel.setResetToken(email, token, expiresAt);
+
+      try {
+        await EmailService.sendPasswordReset(email, token);
+      } catch (mailErr) {
+        logger.error('Failed to send reset email', mailErr);
+        // Não expõe o erro de e-mail ao cliente — o token foi salvo e pode ser reusado
+      }
+
+      genericOk();
+    } catch (err) {
+      logger.error('Forgot password error', err);
+      res.status(500).json({ error: 'Erro ao processar solicitação' });
+    }
+  },
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, password } = req.body;
+
+      const user = await UserModel.findByResetToken(token);
+      if (!user) {
+        res.status(400).json({ error: 'Token inválido ou expirado' });
+        return;
+      }
+
+      await UserModel.resetPassword(user.id, password);
+      logger.info(`Password reset for user ${user.email}`);
+      res.json({ message: 'Senha redefinida com sucesso' });
+    } catch (err) {
+      logger.error('Reset password error', err);
+      res.status(500).json({ error: 'Erro ao redefinir senha' });
     }
   },
 };

@@ -108,4 +108,21 @@ router.post(
 // Rota protegida — o middleware `authenticate` valida o JWT e popula req.user antes do controller
 router.get('/me', authenticate, AuthController.me);
 
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().withMessage('E-mail inválido')],
+  validate,
+  AuthController.forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  [
+    body('token').notEmpty().withMessage('Token obrigatório'),
+    body('password').isLength({ min: 6 }).withMessage('Senha deve ter ao menos 6 caracteres'),
+  ],
+  validate,
+  AuthController.resetPassword
+);
+
 export default router;

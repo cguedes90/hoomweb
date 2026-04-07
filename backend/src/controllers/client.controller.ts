@@ -77,12 +77,18 @@ export const ClientController = {
    */
   async create(req: AuthRequest, res: Response): Promise<void> {
     try {
-      // user_id é sempre sobrescrito pelo valor do token, ignorando qualquer valor no body
       const data = { ...req.body, user_id: req.user!.id };
       const client = await ClientModel.create(data);
       logger.info(`Client created: ${client.id} by user ${req.user!.id}`);
       res.status(201).json(client);
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('uk_clients_document')) {
+        res.status(409).json({ error: 'CPF/CNPJ já cadastrado para outro cliente' }); return;
+      }
+      if (msg.includes('uk_clients_email')) {
+        res.status(409).json({ error: 'E-mail já cadastrado para outro cliente' }); return;
+      }
       logger.error('Create client error', err);
       res.status(500).json({ error: 'Erro ao criar cliente' });
     }
@@ -106,7 +112,14 @@ export const ClientController = {
         return;
       }
       res.json(client);
-    } catch (err) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('uk_clients_document')) {
+        res.status(409).json({ error: 'CPF/CNPJ já cadastrado para outro cliente' }); return;
+      }
+      if (msg.includes('uk_clients_email')) {
+        res.status(409).json({ error: 'E-mail já cadastrado para outro cliente' }); return;
+      }
       logger.error('Update client error', err);
       res.status(500).json({ error: 'Erro ao atualizar cliente' });
     }

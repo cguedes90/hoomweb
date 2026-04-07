@@ -36,6 +36,9 @@
           </button>
         </form>
 
+        <p class="auth-link forgot">
+          <RouterLink to="/forgot-password">Esqueci minha senha</RouterLink>
+        </p>
         <p class="auth-link">
           Não tem conta? <RouterLink to="/register">Cadastre-se</RouterLink>
         </p>
@@ -170,4 +173,7 @@ async function submit() {
 .btn-block { width: 100%; padding: .7rem; margin-top: .5rem; font-size: .95rem; }
 .auth-link { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: #6b7280; }
 .auth-link a { color: #1a56db; font-weight: 500; }
+.auth-link.forgot { margin-top: .75rem; margin-bottom: -.25rem; }
+.auth-link.forgot a { color: #6b7280; font-weight: 400; font-size: .82rem; }
+.auth-link.forgot a:hover { color: #1a56db; }
 </style>
