@@ -39,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Logo
                 Container(
                   width: 64, height: 64,
                   decoration: BoxDecoration(
@@ -58,7 +57,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                // Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
