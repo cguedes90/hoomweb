@@ -11,7 +11,7 @@ Desafio Técnico Fullstack — solução completa cobrindo todas as etapas: 1, 2
 | Backend   | Node.js 20 + TypeScript + Express               |
 | Banco     | PostgreSQL (Neon / qualquer Postgres)           |
 | Frontend  | Vue 3 + TypeScript + Pinia + Vue Router         |
-| Mobile    | React Native + Expo + React Navigation          |
+| Mobile    | Flutter 3 + Provider + flutter_secure_storage   |
 | Infra     | Docker + docker-compose                         |
 
 ---
@@ -20,7 +20,7 @@ Desafio Técnico Fullstack — solução completa cobrindo todas as etapas: 1, 2
 
 - **Etapa 1 — API REST**: autenticação JWT, CRUD de clientes e tarefas, filtros por status/cliente, documentação Swagger
 - **Etapa 2 — Web**: login, cadastro, listagem/cadastro/edição de clientes e tarefas, filtros, máscaras CPF/CNPJ e telefone, layout desktop com sidebar lateral
-- **Etapa 3 — Mobile**: app React Native (Expo) com login, listagem de clientes, listagem de tarefas e atualização de status
+- **Etapa 3 — Mobile**: app Flutter com login, listagem de clientes, listagem de tarefas e atualização de status
 - **Etapa 4 — Integração CEP**: consulta automática via ViaCEP ao digitar o CEP no cadastro de clientes
 - **Etapa 5 — Docker**: Dockerfile multistage para backend e frontend, docker-compose
 - **Etapa 6 — Diferenciais**:
@@ -148,18 +148,18 @@ Documentação interativa: `GET /api/docs`
 ## Mobile (Etapa 3)
 
 ### Pré-requisitos
-- Node.js 20+
-- Expo Go instalado no celular ([iOS](https://apps.apple.com/app/expo-go/id982107779) / [Android](https://play.google.com/store/apps/details?id=host.exp.exponent))
+- Flutter SDK 3.x ([flutter.dev/docs/get-started/install](https://docs.flutter.dev/get-started/install))
+- Android Studio / Xcode (para emulador) ou dispositivo físico
 
 ### Executar
 
 ```bash
-cd mobile
-npm install
-npx expo start
+cd mobile_flutter
+flutter pub get
+flutter run
 ```
 
-Escanear o QR code com o Expo Go. O app conecta automaticamente ao backend em produção.
+O app conecta automaticamente ao backend em produção.
 
 ### Funcionalidades
 - Login com e-mail e senha
@@ -199,13 +199,11 @@ hoomweb/
 │   │   └── views/         # Login, Register, Clients, Tasks
 │   ├── Dockerfile
 │   └── nginx.conf
-├── mobile/                # App React Native (Expo)
-│   ├── src/
-│   │   ├── context/       # AuthContext (login, logout, token)
-│   │   ├── navigation/    # Stack + Bottom Tabs
-│   │   ├── screens/       # Login, Clients, Tasks
-│   │   └── services/      # Axios + SecureStore interceptor
-│   └── App.tsx
+├── mobile_flutter/        # App Flutter (Etapa 3)
+│   ├── lib/
+│   │   ├── screens/       # LoginScreen, ClientsScreen, TasksScreen, HomeScreen
+│   │   └── services/      # ApiService, AuthProvider
+│   └── test/
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
