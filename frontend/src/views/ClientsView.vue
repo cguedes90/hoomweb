@@ -239,15 +239,15 @@ function validateCpf(cpf: string): boolean {
   const d = cpf.replace(/\D/g, '')
   if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
   let sum = 0
-  for (let i = 0; i < 9; i++) sum += +d[i] * (10 - i)
+  for (let i = 0; i < 9; i++) sum += +d.charAt(i) * (10 - i)
   let r = (sum * 10) % 11
   if (r === 10 || r === 11) r = 0
-  if (r !== +d[9]) return false
+  if (r !== +d.charAt(9)) return false
   sum = 0
-  for (let i = 0; i < 10; i++) sum += +d[i] * (11 - i)
+  for (let i = 0; i < 10; i++) sum += +d.charAt(i) * (11 - i)
   r = (sum * 10) % 11
   if (r === 10 || r === 11) r = 0
-  return r === +d[10]
+  return r === +d.charAt(10)
 }
 
 /**
@@ -260,13 +260,13 @@ function validateCnpj(cnpj: string): boolean {
     let sum = 0
     let pos = n - 7
     for (let i = n; i >= 1; i--) {
-      sum += +d[n - i] * pos--
+      sum += +d.charAt(n - i) * pos--
       if (pos < 2) pos = 9
     }
     const r = sum % 11
     return r < 2 ? 0 : 11 - r
   }
-  return calc(d, 12) === +d[12] && calc(d, 13) === +d[13]
+  return calc(d, 12) === +d.charAt(12) && calc(d, 13) === +d.charAt(13)
 }
 
 /**
