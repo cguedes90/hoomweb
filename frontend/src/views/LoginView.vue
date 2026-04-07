@@ -1,27 +1,45 @@
 <template>
   <div class="auth-wrapper">
-    <div class="auth-card">
-      <h1>Hoomweb</h1>
-      <p class="subtitle">Sistema de Gestão de Clientes e Tarefas</p>
+    <!-- Painel esquerdo: branding (visível só no desktop) -->
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <div class="auth-hero-logo">H</div>
+        <h2>Hoomweb</h2>
+        <p>Gerencie clientes e tarefas com eficiência. Tudo em um só lugar.</p>
+        <ul class="auth-features">
+          <li>✓ Cadastro e gestão de clientes</li>
+          <li>✓ Tarefas vinculadas a clientes</li>
+          <li>✓ Filtros por status e cliente</li>
+          <li>✓ Preenchimento automático de CEP</li>
+        </ul>
+      </div>
+    </div>
 
-      <form @submit.prevent="submit">
-        <div class="form-group">
-          <label>E-mail</label>
-          <input v-model="form.email" type="email" required placeholder="seu@email.com" />
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input v-model="form.password" type="password" required placeholder="••••••" />
-        </div>
-        <p v-if="error" class="error-msg">{{ error }}</p>
-        <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
-          {{ loading ? 'Entrando...' : 'Entrar' }}
-        </button>
-      </form>
+    <!-- Painel direito: formulário -->
+    <div class="auth-form-panel">
+      <div class="auth-card">
+        <h1>Bem-vindo de volta</h1>
+        <p class="subtitle">Faça login para continuar</p>
 
-      <p class="auth-link">
-        Não tem conta? <RouterLink to="/register">Cadastre-se</RouterLink>
-      </p>
+        <form @submit.prevent="submit">
+          <div class="form-group">
+            <label>E-mail</label>
+            <input v-model="form.email" type="email" required placeholder="seu@email.com" />
+          </div>
+          <div class="form-group">
+            <label>Senha</label>
+            <input v-model="form.password" type="password" required placeholder="••••••" />
+          </div>
+          <p v-if="error" class="error-msg">{{ error }}</p>
+          <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
+            {{ loading ? 'Entrando...' : 'Entrar' }}
+          </button>
+        </form>
+
+        <p class="auth-link">
+          Não tem conta? <RouterLink to="/register">Cadastre-se</RouterLink>
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -90,26 +108,66 @@ async function submit() {
   min-height: 100vh;
   width: 100%;
   display: flex;
+}
+
+/* ── Hero panel (desktop only) ── */
+.auth-hero {
+  display: none;
+}
+@media (min-width: 768px) {
+  .auth-hero {
+    display: flex;
+    flex: 1;
+    background: linear-gradient(145deg, #1a56db 0%, #1035a8 100%);
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: white;
+  }
+}
+.auth-hero-content { max-width: 380px; }
+.auth-hero-logo {
+  width: 56px; height: 56px;
+  background: rgba(255,255,255,.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+.auth-hero-content h2 { font-size: 2rem; font-weight: 800; margin-bottom: .75rem; }
+.auth-hero-content p { font-size: 1rem; opacity: .85; margin-bottom: 2rem; line-height: 1.6; }
+.auth-features { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.auth-features li { font-size: .9rem; opacity: .9; }
+
+/* ── Form panel ── */
+.auth-form-panel {
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  background: linear-gradient(135deg, #1a56db 0%, #1648c4 100%);
+  padding: 2rem 1.5rem;
+  background: #f3f4f6;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .auth-form-panel {
+    width: 480px;
+    min-width: 480px;
+    flex: none;
+    padding: 3rem 2.5rem;
+    background: #f3f4f6;
+  }
 }
 .auth-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 2.5rem;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  max-width: 400px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
 }
-.auth-card h1 { text-align: center; color: #1a56db; margin-bottom: .25rem; }
-.subtitle { text-align: center; color: #6b7280; font-size: .875rem; margin-bottom: 2rem; }
-.btn-block { width: 100%; padding: .65rem; margin-top: .5rem; }
+.auth-card h1 { color: #111827; font-size: 1.5rem; margin-bottom: .3rem; }
+.subtitle { color: #6b7280; font-size: .875rem; margin-bottom: 2rem; }
+.btn-block { width: 100%; padding: .7rem; margin-top: .5rem; font-size: .95rem; }
 .auth-link { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: #6b7280; }
-.auth-link a { color: #1a56db; }
-
-@media (max-width: 480px) {
-  .auth-card { padding: 1.75rem 1.25rem; border-radius: 10px; }
-}
+.auth-link a { color: #1a56db; font-weight: 500; }
 </style>
