@@ -27,23 +27,56 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @component LoginView
+ * @description Tela de autenticação da aplicação.
+ *
+ * Exibe um formulário de login com campos de e-mail e senha. Ao submeter,
+ * delega a autenticação ao `useAuthStore`, que realiza a chamada à API e
+ * persiste o token no `localStorage`. Em caso de sucesso, redireciona o
+ * usuário para a área principal (`/clients`).
+ *
+ * Erros de autenticação (credenciais inválidas, falha de rede) são exibidos
+ * diretamente abaixo dos campos do formulário.
+ *
+ * O botão de submit é desabilitado durante o processamento para evitar
+ * múltiplos envios simultâneos.
+ */
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+/** Store de autenticação: gerencia o estado da sessão e expõe a ação `login`. */
 const auth = useAuthStore()
+/** Router para redirecionamento programático após login bem-sucedido. */
 const router = useRouter()
+/** Dados do formulário de login. */
 const form = ref({ email: '', password: '' })
+/** Mensagem de erro exibida ao usuário em caso de falha na autenticação. */
 const error = ref('')
+/** Indica se a requisição de login está em andamento. */
 const loading = ref(false)
 
+/**
+ * Submete o formulário de login.
+ *
+ * Limpa o erro anterior, aciona o estado de loading e chama `auth.login`.
+ * Em caso de sucesso, redireciona para `/clients` via router (navegação SPA,
+ * sem recarregar a página). Em caso de falha, exibe a mensagem retornada
+ * pelo backend ou uma mensagem genérica de fallback.
+ *
+ * O bloco `finally` garante que o estado de loading seja sempre resetado,
+ * mesmo em caso de erro inesperado.
+ */
 async function submit() {
   error.value = ''
   loading.value = true
   try {
     await auth.login(form.value.email, form.value.password)
+    // Redireciona para a tela principal após autenticação bem-sucedida
     router.push('/clients')
   } catch (e: unknown) {
+    // Tipagem manual necessária pois o TypeScript infere `unknown` em blocos catch
     const err = e as { response?: { data?: { error?: string } } }
     error.value = err.response?.data?.error || 'Erro ao fazer login'
   } finally {

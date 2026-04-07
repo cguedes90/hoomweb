@@ -1,3 +1,20 @@
+/**
+ * @module ClientRoutes
+ * @description Definição das rotas de gerenciamento de clientes da API.
+ *
+ * Todas as rotas deste módulo são protegidas pelo middleware `authenticate`,
+ * que verifica o token JWT e garante que apenas usuários autenticados possam
+ * acessar ou modificar dados de clientes.
+ *
+ * Atenção ao ordenamento das rotas: a rota `/cep/:cep` deve ser registrada
+ * ANTES de `/:id`, pois o Express faz o match da primeira rota que satisfaz
+ * o padrão. Se `/:id` viesse primeiro, a requisição para `/cep/01310100`
+ * seria capturada com `req.params.id = "cep"`, causando comportamento incorreto.
+ *
+ * As anotações `@openapi` são utilizadas pelo `swagger-jsdoc` para geração
+ * automática da documentação em `/api/docs`.
+ */
+
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { ClientController } from '../controllers/client.controller';
@@ -16,6 +33,7 @@ const router = Router();
  *       200:
  *         description: Lista de clientes
  */
+// Retorna todos os clientes do usuário autenticado, ordenados por nome
 router.get('/', authenticate, ClientController.list);
 
 /**
@@ -35,6 +53,7 @@ router.get('/', authenticate, ClientController.list);
  *       404:
  *         description: Não encontrado
  */
+// Busca um cliente específico; retorna 404 se não pertencer ao usuário autenticado
 router.get('/:id', authenticate, ClientController.getOne);
 
 /**
@@ -66,6 +85,7 @@ router.get('/:id', authenticate, ClientController.getOne);
  *       201:
  *         description: Cliente criado
  */
+// Apenas `name` é obrigatório; demais campos de endereço e contato são opcionais
 router.post(
   '/',
   authenticate,
@@ -89,6 +109,7 @@ router.post(
  *       200:
  *         description: Cliente atualizado
  */
+// Atualização parcial: apenas os campos presentes no body serão modificados
 router.put('/:id', authenticate, ClientController.update);
 
 /**
@@ -106,6 +127,7 @@ router.put('/:id', authenticate, ClientController.update);
  *       204:
  *         description: Deletado
  */
+// Retorna 204 sem body em caso de sucesso; pode remover tarefas em cascata no banco
 router.delete('/:id', authenticate, ClientController.remove);
 
 /**
@@ -123,6 +145,7 @@ router.delete('/:id', authenticate, ClientController.remove);
  *       200:
  *         description: Dados do endereço
  */
+// IMPORTANTE: esta rota deve ser declarada antes de /:id para evitar conflito de matching
 router.get('/cep/:cep', authenticate, ClientController.lookupCep);
 
 export default router;

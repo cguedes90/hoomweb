@@ -1,3 +1,18 @@
+/**
+ * @module TaskRoutes
+ * @description Definição das rotas de gerenciamento de tarefas da API.
+ *
+ * Todas as rotas são protegidas pelo middleware `authenticate`. O endpoint de
+ * listagem aceita parâmetros de query opcionais para filtragem por status e
+ * por cliente, evitando a necessidade de endpoints separados para cada filtro.
+ *
+ * O campo `status` é validado em criação e atualização para garantir que
+ * apenas valores do enum `TaskStatus` sejam persistidos no banco.
+ *
+ * As anotações `@openapi` são utilizadas pelo `swagger-jsdoc` para geração
+ * automática da documentação em `/api/docs`.
+ */
+
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { TaskController } from '../controllers/task.controller';
@@ -23,6 +38,7 @@ const router = Router();
  *       200:
  *         description: Lista de tarefas
  */
+// Os filtros são opcionais e cumulativos: ambos podem ser omitidos, usados separadamente ou juntos
 router.get('/', authenticate, TaskController.list);
 
 /**
@@ -40,6 +56,7 @@ router.get('/', authenticate, TaskController.list);
  *       200:
  *         description: Tarefa encontrada
  */
+// Retorna a tarefa com o campo `client_name` via JOIN no model
 router.get('/:id', authenticate, TaskController.getOne);
 
 /**
@@ -70,7 +87,9 @@ router.post(
   authenticate,
   [
     body('title').notEmpty().withMessage('Título obrigatório'),
+    // client_id deve ser um inteiro positivo — referência a um cliente existente do usuário
     body('client_id').isInt({ min: 1 }).withMessage('Cliente obrigatório'),
+    // status é opcional na criação; o model assume 'pending' como valor padrão
     body('status').optional().isIn(['pending', 'in_progress', 'done', 'cancelled']),
   ],
   validate,
@@ -95,6 +114,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  // Na atualização, apenas o status precisa ser validado se presente no body
   [body('status').optional().isIn(['pending', 'in_progress', 'done', 'cancelled'])],
   validate,
   TaskController.update
@@ -115,6 +135,7 @@ router.put(
  *       204:
  *         description: Deletada
  */
+// Retorna 204 sem corpo em caso de sucesso
 router.delete('/:id', authenticate, TaskController.remove);
 
 export default router;

@@ -28,23 +28,57 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @component RegisterView
+ * @description Tela de cadastro de novo usuário.
+ *
+ * Exibe um formulário com campos de nome, e-mail e senha. Ao submeter, delega
+ * o cadastro ao `useAuthStore`, que chama a API e já autentica o usuário com
+ * o token retornado na mesma resposta. Em caso de sucesso, redireciona para
+ * `/clients` sem necessidade de um login adicional.
+ *
+ * A validação mínima de senha (6 caracteres) é aplicada pelo atributo `minlength`
+ * no input do template, complementada pela validação do backend. Erros de negócio
+ * — como e-mail já cadastrado — são exibidos abaixo dos campos do formulário.
+ */
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+/** Store de autenticação: gerencia o estado da sessão e expõe a ação `register`. */
 const auth = useAuthStore()
+/** Router para redirecionamento programático após cadastro bem-sucedido. */
 const router = useRouter()
+/** Dados do formulário de cadastro. */
 const form = ref({ name: '', email: '', password: '' })
+/** Mensagem de erro exibida ao usuário em caso de falha no cadastro. */
 const error = ref('')
+/** Indica se a requisição de cadastro está em andamento. */
 const loading = ref(false)
 
+/**
+ * Submete o formulário de cadastro.
+ *
+ * Chama `auth.register`, que cria o usuário no backend e já inicia a sessão
+ * com o token retornado — comportamento que evita a etapa redundante de login
+ * logo após o cadastro. Em caso de sucesso, redireciona para `/clients`.
+ *
+ * Erros comuns tratados: e-mail duplicado (409 do backend) e erros de validação
+ * de campos. O fallback da mensagem garante que o usuário sempre receba algum
+ * feedback em caso de falha inesperada.
+ *
+ * O bloco `finally` garante que o estado de loading seja resetado mesmo em
+ * caso de erro não previsto.
+ */
 async function submit() {
   error.value = ''
   loading.value = true
   try {
     await auth.register(form.value.name, form.value.email, form.value.password)
+    // O backend retorna token + user após o registro, então o usuário já está autenticado aqui
     router.push('/clients')
   } catch (e: unknown) {
+    // Tipagem manual necessária pois o TypeScript infere `unknown` em blocos catch
     const err = e as { response?: { data?: { error?: string } } }
     error.value = err.response?.data?.error || 'Erro ao cadastrar'
   } finally {

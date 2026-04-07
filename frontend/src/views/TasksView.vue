@@ -103,39 +103,88 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * @component TasksView
+ * @description View responsável pelo gerenciamento completo de tarefas (CRUD) com filtros.
+ *
+ * Exibe a lista de tarefas do usuário em uma tabela com suporte a filtragem por
+ * status e por cliente. O modal de criação/edição é controlado pelo mesmo padrão
+ * de `editing` utilizado na `ClientsView`.
+ *
+ * Na montagem, `load` e `loadClients` são executados em paralelo com `Promise.all`
+ * para reduzir o tempo de carregamento inicial — a lista de clientes é necessária
+ * tanto para os selects de filtro quanto para o formulário do modal.
+ *
+ * O campo `client_name` presente em cada tarefa é retornado diretamente pela API
+ * via JOIN, evitando lookups adicionais no frontend para exibir o nome do cliente.
+ */
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
+/**
+ * Estrutura de dados de uma tarefa conforme retornada pela API.
+ * O campo `client_name` é um campo extra adicionado pelo JOIN no backend e
+ * não faz parte da tabela `tasks` diretamente.
+ */
 interface Task {
   id: number
   title: string
   description?: string
+  /** Status atual da tarefa. Corresponde ao tipo `TaskStatus` do backend. */
   status: string
+  /** Data de vencimento em formato ISO 8601 (ex.: "2025-12-31T00:00:00.000Z"). */
   due_date?: string
   client_id: number
+  /** Nome do cliente, obtido via JOIN na query do backend. */
   client_name: string
 }
 
+/** Estrutura mínima do cliente, usada nos selects de filtro e do formulário. */
 interface Client { id: number; name: string }
 
+/** Lista de tarefas carregada da API, respeitando os filtros ativos. */
 const tasks = ref<Task[]>([])
+/** Lista de clientes do usuário, usada nos selects de filtro e de associação de tarefas. */
 const clients = ref<Client[]>([])
+/** Indica se a carga de tarefas está em andamento. */
 const loading = ref(true)
+/** Controla a visibilidade do modal de criação/edição. */
 const showModal = ref(false)
+/** Referência à tarefa sendo editada. `null` quando em modo de criação. */
 const editing = ref<Task | null>(null)
+/** Indica se o formulário está sendo submetido (evita duplo envio). */
 const saving = ref(false)
+/** Mensagem de erro do formulário exibida acima dos botões de ação. */
 const formError = ref('')
+/** Filtro de status ativo. String vazia significa "todos os status". */
 const filterStatus = ref('')
+/** Filtro de cliente ativo. String vazia ('') significa "todos os clientes". */
 const filterClient = ref<number | ''>('')
 
+/**
+ * Fábrica de formulário vazio para tarefas.
+ * O `client_id` pode ser number ou '' para compatibilidade com o select do HTML
+ * que usa string vazia como placeholder de "não selecionado".
+ */
 const defaultForm = () => ({
   title: '', description: '', status: 'pending', due_date: '', client_id: '' as number | '',
 })
 const form = ref(defaultForm())
 
+/**
+ * Carrega as tarefas da API aplicando os filtros ativos.
+ *
+ * Constrói os query params dinamicamente: apenas inclui `status` e `client_id`
+ * se tiverem valores não vazios, evitando que o backend receba filtros vazios
+ * que poderiam ser interpretados de forma indesejada.
+ *
+ * Esta função é chamada na montagem do componente e novamente sempre que um
+ * filtro é alterado (via `@change` nos selects do template).
+ */
 async function load() {
   loading.value = true
   const params: Record<string, unknown> = {}
+  // Adiciona apenas os filtros com valor para não enviar parâmetros vazios à API
   if (filterStatus.value) params.status = filterStatus.value
   if (filterClient.value) params.client_id = filterClient.value
   const { data } = await api.get('/tasks', { params })
@@ -143,11 +192,19 @@ async function load() {
   loading.value = false
 }
 
+/**
+ * Carrega todos os clientes do usuário para popular os selects do formulário e dos filtros.
+ * Esta chamada é feita uma única vez na montagem do componente, pois a lista de clientes
+ * não muda durante a navegação na view de tarefas.
+ */
 async function loadClients() {
   const { data } = await api.get('/clients')
   clients.value = data
 }
 
+/**
+ * Abre o modal no modo de criação de nova tarefa.
+ */
 function openCreate() {
   editing.value = null
   form.value = defaultForm()
@@ -155,12 +212,22 @@ function openCreate() {
   showModal.value = true
 }
 
+/**
+ * Abre o modal no modo de edição de uma tarefa existente.
+ *
+ * A data de vencimento é truncada para `YYYY-MM-DD` (primeiros 10 caracteres do ISO 8601)
+ * para compatibilidade com o input type="date" do HTML, que não aceita o formato completo
+ * com horário e fuso horário retornado pela API.
+ *
+ * @param t - Objeto da tarefa a ser editada.
+ */
 function openEdit(t: Task) {
   editing.value = t
   form.value = {
     title: t.title,
     description: t.description || '',
     status: t.status,
+    // Trunca para "YYYY-MM-DD" — input[type=date] não aceita timestamp completo
     due_date: t.due_date ? t.due_date.slice(0, 10) : '',
     client_id: t.client_id,
   }
@@ -168,8 +235,19 @@ function openEdit(t: Task) {
   showModal.value = true
 }
 
+/** Fecha o modal sem salvar. */
 function closeModal() { showModal.value = false }
 
+/**
+ * Salva a tarefa (criação ou atualização) e atualiza a lista local.
+ *
+ * Em modo de edição: faz PUT e mescla a resposta com os dados existentes via spread,
+ * preservando `client_name` que a API de update não retorna no RETURNING básico.
+ *
+ * Em modo de criação: faz POST, busca o nome do cliente localmente na lista em memória
+ * (evita outro GET /clients) e adiciona a tarefa no início da lista (unshift) para
+ * simular a ordenação por `created_at DESC` usada pelo backend.
+ */
 async function save() {
   formError.value = ''
   saving.value = true
@@ -177,10 +255,13 @@ async function save() {
     if (editing.value) {
       const { data } = await api.put(`/tasks/${editing.value.id}`, form.value)
       const idx = tasks.value.findIndex(t => t.id === editing.value!.id)
+      // Spread preserva client_name e outros campos não retornados pelo endpoint de update
       tasks.value[idx] = { ...tasks.value[idx], ...data }
     } else {
       const { data } = await api.post('/tasks', form.value)
+      // Busca o nome do cliente na lista em memória para não fazer outro GET /clients
       const client = clients.value.find(c => c.id === data.client_id)
+      // unshift adiciona no início para respeitar a ordenação DESC da lista existente
       tasks.value.unshift({ ...data, client_name: client?.name || '' })
     }
     closeModal()
@@ -192,20 +273,43 @@ async function save() {
   }
 }
 
+/**
+ * Remove uma tarefa após confirmação do usuário.
+ *
+ * @param id - ID da tarefa a ser removida.
+ */
 async function removeTask(id: number) {
   if (!confirm('Excluir esta tarefa?')) return
   await api.delete(`/tasks/${id}`)
+  // Atualiza a lista local sem recarregar do servidor
   tasks.value = tasks.value.filter(t => t.id !== id)
 }
 
+/**
+ * Converte o valor interno do status para o rótulo exibido na interface.
+ *
+ * Utiliza acesso por chave em um objeto literal em vez de switch/case,
+ * produzindo código mais conciso. O fallback `|| s` retorna o próprio valor
+ * caso um status desconhecido seja recebido, evitando exibir undefined.
+ *
+ * @param s - Valor interno do status (ex.: 'in_progress').
+ * @returns Rótulo legível em português (ex.: 'Em andamento').
+ */
 function statusLabel(s: string) {
   return { pending: 'Pendente', in_progress: 'Em andamento', done: 'Concluído', cancelled: 'Cancelado' }[s] || s
 }
 
+/**
+ * Formata uma string de data ISO 8601 para o padrão brasileiro (DD/MM/AAAA).
+ *
+ * @param d - Data em formato ISO 8601 ou compatível com `new Date()`.
+ * @returns Data formatada no padrão pt-BR.
+ */
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('pt-BR')
 }
 
+// Carrega tarefas e clientes em paralelo na montagem para minimizar o tempo de carregamento inicial
 onMounted(async () => {
   await Promise.all([load(), loadClients()])
 })

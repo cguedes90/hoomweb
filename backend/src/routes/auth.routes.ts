@@ -1,3 +1,20 @@
+/**
+ * @module AuthRoutes
+ * @description Definição das rotas de autenticação da API.
+ *
+ * Registra os endpoints públicos de registro e login, além do endpoint protegido
+ * `/me` que retorna os dados do usuário autenticado. As rotas públicas não exigem
+ * token JWT; o endpoint `/me` passa pelo middleware `authenticate` antes de
+ * chegar ao controller.
+ *
+ * Cada rota pública possui validação de corpo com `express-validator`, centralizada
+ * no middleware `validate`, que interrompe o fluxo e retorna 422 caso haja erros
+ * de validação, sem chegar ao controller.
+ *
+ * As anotações `@openapi` são processadas pelo `swagger-jsdoc` para geração
+ * automática da documentação interativa disponível em `/api/docs`.
+ */
+
 import { Router } from 'express';
 import { body } from 'express-validator';
 import { AuthController } from '../controllers/auth.controller';
@@ -31,11 +48,13 @@ const router = Router();
  *       409:
  *         description: E-mail já cadastrado
  */
+// Rota pública — não exige token. Valida os campos antes de chegar ao controller.
 router.post(
   '/register',
   [
     body('name').notEmpty().withMessage('Nome obrigatório'),
     body('email').isEmail().withMessage('E-mail inválido'),
+    // Senha mínima de 6 caracteres — o hash bcrypt é aplicado no model
     body('password').isLength({ min: 6 }).withMessage('Senha deve ter ao menos 6 caracteres'),
   ],
   validate,
@@ -65,6 +84,7 @@ router.post(
  *       401:
  *         description: Credenciais inválidas
  */
+// Rota pública — valida apenas formato dos campos, a verificação de credenciais fica no controller
 router.post(
   '/login',
   [
@@ -85,6 +105,7 @@ router.post(
  *       200:
  *         description: Dados do usuário
  */
+// Rota protegida — o middleware `authenticate` valida o JWT e popula req.user antes do controller
 router.get('/me', authenticate, AuthController.me);
 
 export default router;
